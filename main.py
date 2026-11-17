@@ -4,7 +4,7 @@ from collections import deque
 from network_support import validate_request, record_step
 from app_runner import run
 
-STAGE = 1  # Monday 1; Tuesday 2 when traversals work; Thursday 3 when routes work.
+STAGE = 2  # Monday 1; Tuesday 2 when traversals work; Thursday 3 when routes work.
 MY_RESTRICTION = "A"  # Set this to your instructor-issued case in your personal copy.
 
 
