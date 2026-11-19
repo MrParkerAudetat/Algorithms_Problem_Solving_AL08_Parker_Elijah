@@ -2,8 +2,9 @@
 
 from network_support import validate_model
 from main import breadth_first, depth_first, shortest_hop_path, MY_RESTRICTION
+from network_data import GRAPH, START, GOAL, RESTRICTIONS
 
-TEST_STAGE = 2  # Raise to 2 Tuesday and 3 Thursday after completing those tests.
+TEST_STAGE = 3  # Raise to 2 Tuesday and 3 Thursday after completing those tests.
 
 
 def test_model():
@@ -11,6 +12,15 @@ def test_model():
     assert validate_model({"A": ["B"], "B": ["A"]}) == []
     assert validate_model({"A": ["Missing"]}) == ["A: unknown node Missing"]
     # Add your one broken-and-repaired copy of the workshop model.
+    original = {room: neighbors.copy() for room, neighbors in GRAPH.items()}
+    copy = {room: neighbors.copy() for room, neighbors in GRAPH.items()}
+
+    copy["Entrance"].append("MissingHallway")
+    assert validate_model(copy) == ["Entrance: unknown node MissingHallway"]
+
+    copy["Entrance"].remove("MissingHallway")
+    assert validate_model(copy) == []
+    assert GRAPH == original
 
 
 def test_traversals():
@@ -34,16 +44,39 @@ def test_traversals():
 
 
 def test_paths_and_personal_case():
+    original_graph = {
+    room: neighbors.copy() for room, neighbors in GRAPH.items()
+    }
+    tiny = {"A": ["B", "C"], "B": ["A"], "C": ["A"], "D": []}
     path, parents = shortest_hop_path(tiny, "A", "C")
     assert path == ["A", "C"]
     assert parents == {"A": None, "B": "A", "C": "A"}
     
+    expected_a = [
+        "Entrance", "Reception", "Hallway", "Assembly",
+        "Inspection", "Packing", "Loading",
+    ]
+
+    personal_blocked = RESTRICTIONS[MY_RESTRICTION]["blocked"]
+    path_a, _ = shortest_hop_path(
+        GRAPH, START, GOAL, blocked=personal_blocked
+    )
+    assert path_a == expected_a
+
     assert shortest_hop_path(tiny, "A", "A") == (["A"], {"A": None})
     assert shortest_hop_path(tiny, "A", "D") == (
-    None,
-    {"A": None, "B": "A", "C": "A"},
-)
+        None,
+        {"A": None, "B": "A", "C": "A"},
+    )
+
     assert shortest_hop_path(tiny, "A", "C", blocked={"C"}) == (None, {})
+    baseline, _ = shortest_hop_path(GRAPH, START, GOAL)
+    assert baseline == ["Entrance", "Reception", "Office", "Loading"]
+
+    annex_path, _ = shortest_hop_path(GRAPH, START, "Annex")
+    assert annex_path is None
+    
+    assert GRAPH == original_graph
     """Check route boundaries and your issued blocked-node result independently."""
     # Check a small known path, start=goal, disconnected goal, and a blocked endpoint.
     # Import the supplied workshop data and use MY_RESTRICTION for your personal case.
